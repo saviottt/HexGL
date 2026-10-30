@@ -112,15 +112,40 @@ bkcore.hexgl.ShipControls = function(ctx)
 		use: false
 	};
 
+	this.keyboardKey = {
+		forward: false,
+		backward: false,
+		left: false,
+		right: false,
+		ltrigger: false,
+		rtrigger: false,
+		use: false
+	};
+
 	this.collision = {
 		front: false,
 		left: false,
 		right: false
 	};
 
+	this.controlType = ctx.controlType;
 	this.touchController = null;
 	this.orientationController = null;
-	this.gamepadController = null
+	this.gamepadController = null;
+
+	// Attach WebcamGestureController (controlType 4 = 'WEBCAM GESTURE' menu entry)
+	// without removing any existing keyboard / touch / gamepad / leap handlers.
+	this.webcamController = (bkcore.controllers && bkcore.controllers.WebcamGestureController)
+		? bkcore.controllers.WebcamGestureController.getInstance()
+		: null;
+
+	if (this.webcamController) {
+		if (ctx.controlType === 4) {
+			this.webcamController.setMode('webcam', true);
+		} else {
+			this.webcamController.setMode('keyboard', true);
+		}
+	}
 
 	if(ctx.controlType == 1 && bkcore.controllers.TouchController.isCompatible())
 	{
@@ -140,7 +165,7 @@ bkcore.hexgl.ShipControls = function(ctx)
 				}
 			});
 	}
-	else if(ctx.controlType == 4 && bkcore.controllers.OrientationController.isCompatible())
+	else if(ctx.controlType == 5 && bkcore.controllers.OrientationController.isCompatible())
 	{
 		this.orientationController = new bkcore.controllers.OrientationController(
 			domElement, true,
@@ -250,46 +275,84 @@ bkcore.hexgl.ShipControls = function(ctx)
 
 	function onKeyDown(event)
 	{
-		switch(event.keyCode)
+		var code = event.code || '';
+		var key = (event.key || '').toLowerCase();
+		var kc = event.keyCode;
+
+		if(kc === 38 || kc === 87 || kc === 32 || code === 'ArrowUp' || code === 'KeyW' || key === 'w' || code === 'Space' || key === ' ')
 		{
-			case 38: /*up*/	self.key.forward = true; break;
-
-			case 40: /*down*/self.key.backward = true; break;
-
-			case 37: /*left*/self.key.left = true; break;
-
-			case 39: /*right*/self.key.right = true; break;
-
-			case 81: /*Q*/self.key.ltrigger = true; break;
-			case 65: /*A*/self.key.ltrigger = true; break;
-
-			case 68: /*D*/self.key.rtrigger = true; break;
-			case 69: /*E*/self.key.rtrigger = true; break;
+			self.keyboardKey.forward = true;
+			self.key.forward = true;
+		}
+		else if(kc === 40 || kc === 83 || code === 'ArrowDown' || code === 'KeyS' || key === 's')
+		{
+			self.keyboardKey.backward = true;
+			self.key.backward = true;
+		}
+		else if(kc === 37 || kc === 65 || code === 'ArrowLeft' || code === 'KeyA' || key === 'a')
+		{
+			self.keyboardKey.left = true;
+			self.key.left = true;
+		}
+		else if(kc === 39 || kc === 68 || code === 'ArrowRight' || code === 'KeyD' || key === 'd')
+		{
+			self.keyboardKey.right = true;
+			self.key.right = true;
+		}
+		else if(kc === 81 || code === 'KeyQ' || key === 'q')
+		{
+			self.keyboardKey.ltrigger = true;
+			self.key.ltrigger = true;
+		}
+		else if(kc === 69 || code === 'KeyE' || key === 'e')
+		{
+			self.keyboardKey.rtrigger = true;
+			self.key.rtrigger = true;
 		}
 	};
 
 	function onKeyUp(event)
 	{
-		switch(event.keyCode)
+		var code = event.code || '';
+		var key = (event.key || '').toLowerCase();
+		var kc = event.keyCode;
+
+		if(kc === 38 || kc === 87 || kc === 32 || code === 'ArrowUp' || code === 'KeyW' || key === 'w' || code === 'Space' || key === ' ')
 		{
-			case 38: /*up*/	self.key.forward = false; break;
-
-			case 40: /*down*/self.key.backward = false; break;
-
-			case 37: /*left*/self.key.left = false; break;
-
-			case 39: /*right*/self.key.right = false; break;
-
-			case 81: /*Q*/self.key.ltrigger = false; break;
-			case 65: /*A*/self.key.ltrigger = false; break;
-
-			case 68: /*D*/self.key.rtrigger = false; break;
-			case 69: /*E*/self.key.rtrigger = false; break;
+			self.keyboardKey.forward = false;
+			self.key.forward = false;
+		}
+		else if(kc === 40 || kc === 83 || code === 'ArrowDown' || code === 'KeyS' || key === 's')
+		{
+			self.keyboardKey.backward = false;
+			self.key.backward = false;
+		}
+		else if(kc === 37 || kc === 65 || code === 'ArrowLeft' || code === 'KeyA' || key === 'a')
+		{
+			self.keyboardKey.left = false;
+			self.key.left = false;
+		}
+		else if(kc === 39 || kc === 68 || code === 'ArrowRight' || code === 'KeyD' || key === 'd')
+		{
+			self.keyboardKey.right = false;
+			self.key.right = false;
+		}
+		else if(kc === 81 || code === 'KeyQ' || key === 'q')
+		{
+			self.keyboardKey.ltrigger = false;
+			self.key.ltrigger = false;
+		}
+		else if(kc === 69 || code === 'KeyE' || key === 'e')
+		{
+			self.keyboardKey.rtrigger = false;
+			self.key.rtrigger = false;
 		}
 	};
 
 	domElement.addEventListener('keydown', onKeyDown, false);
 	domElement.addEventListener('keyup', onKeyUp, false);
+	window.addEventListener('keydown', onKeyDown, false);
+	window.addEventListener('keyup', onKeyUp, false);
 };
 
 bkcore.hexgl.ShipControls.prototype.control = function(threeMesh)
@@ -312,6 +375,18 @@ bkcore.hexgl.ShipControls.prototype.reset = function(position, rotation)
 	this.boost = 0.0;
 	this.shield = this.maxShield;
 	this.destroyed = false;
+	this.key.forward = false;
+	this.key.backward = false;
+	this.key.left = false;
+	this.key.right = false;
+	this.key.ltrigger = false;
+	this.key.rtrigger = false;
+	this.keyboardKey.forward = false;
+	this.keyboardKey.backward = false;
+	this.keyboardKey.left = false;
+	this.keyboardKey.right = false;
+	this.keyboardKey.ltrigger = false;
+	this.keyboardKey.rtrigger = false;
 
 	this.dummy.position.copy(position);
 	this.quaternion.set(rotation.x, rotation.y, rotation.z, 1).normalize();
@@ -333,6 +408,12 @@ bkcore.hexgl.ShipControls.prototype.terminate = function()
 	{
 		this.leapController.disconnect();
 		this.leapInfo.style.display = 'none';
+	}
+
+	// Reset gesture states when a race ends, but keep the camera preview alive
+	// so the player can still see the HUD and switch modes on the results screen.
+	if (this.webcamController && this.webcamController.mode === 'webcam') {
+		this.webcamController.resetGestureStates();
 	}
 }
 
@@ -356,7 +437,7 @@ bkcore.hexgl.ShipControls.prototype.fall = function()
 	this.collision.left = false;
 	this.collision.right = false;
 	this.falling = true;
-	_this = this;
+	var _this = this;
 	setTimeout(function(){
 		_this.destroyed = true;
 	}, 1500);
@@ -410,15 +491,48 @@ bkcore.hexgl.ShipControls.prototype.update = function(dt)
 		}
 		else
 		{
+			// ── Webcam Gesture + Keyboard unified block ──────────────────────────
+			// Smoothly merge gesture inputs and keyboard inputs. Keyboard keys
+			// (Up/Down/Left/Right/WASD/Space) always function in parallel as
+			// responsive fallbacks so the ship never stalls.
+			var gestureSteerScale = 1.0;
+			var forwardInput = (this.keyboardKey && this.keyboardKey.forward) || false;
+			var backwardInput = (this.keyboardKey && this.keyboardKey.backward) || false;
+			var leftInput = (this.keyboardKey && this.keyboardKey.left) || false;
+			var rightInput = (this.keyboardKey && this.keyboardKey.right) || false;
+			var ltriggerInput = (this.keyboardKey && this.keyboardKey.ltrigger) || false;
+			var rtriggerInput = (this.keyboardKey && this.keyboardKey.rtrigger) || false;
+
+			if (this.webcamController && this.webcamController.mode === 'webcam') {
+				var gestureInput = this.webcamController.getControlInputs(dt);
+				if (gestureInput.forward) forwardInput = true;
+				if (gestureInput.backward) backwardInput = true;
+				if (gestureInput.left) leftInput = true;
+				if (gestureInput.right) rightInput = true;
+				if (gestureInput.ltrigger) ltriggerInput = true;
+				if (gestureInput.rtrigger) rtriggerInput = true;
+
+				if (gestureInput.steerValue !== 0) {
+					gestureSteerScale = Math.max(0.35, Math.abs(gestureInput.steerValue));
+				}
+			}
+
+			this.key.forward = forwardInput;
+			this.key.backward = backwardInput;
+			this.key.left = leftInput;
+			this.key.right = rightInput;
+			this.key.ltrigger = ltriggerInput;
+			this.key.rtrigger = rtriggerInput;
+
 			if(this.key.left)
 			{
-				angularAmount += this.angularSpeed * dt;
-				rollAmount -= this.rollAngle;
+				angularAmount += this.angularSpeed * dt * gestureSteerScale;
+				rollAmount -= this.rollAngle * gestureSteerScale;
 			}
 			if(this.key.right)
 			{
-				angularAmount -= this.angularSpeed * dt;
-				rollAmount += this.rollAngle;
+				angularAmount -= this.angularSpeed * dt * gestureSteerScale;
+				rollAmount += this.rollAngle * gestureSteerScale;
 			}
 		}
 
@@ -426,6 +540,9 @@ bkcore.hexgl.ShipControls.prototype.update = function(dt)
 			this.speed += this.thrust * dt;
 		else
 			this.speed -= this.airResist * dt;
+
+		if(this.key.backward)
+			this.speed -= this.airBrake * dt * 1.5;
 		if(this.key.ltrigger)
 		{
 			if(this.key.left)

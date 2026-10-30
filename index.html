@@ -15,6 +15,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" href="css/multi.css" type="text/css" charset="utf-8">
     <link rel="stylesheet" href="css/fonts.css" type="text/css" charset="utf-8">
+    <link rel="stylesheet" href="css/webcam-controls.css" type="text/css" charset="utf-8">
     <style>
       body {
         padding:0;
@@ -111,6 +112,10 @@
     <script src="bkcore/threejs/Loader.js"></script>
 
     <script src="bkcore/Audio.js"></script>
+
+    <!-- MediaPipe Hands (browser build) — required for Webcam Gesture Mode -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+    <script src="bkcore/controllers/WebcamGestureController.js"></script>
 
     <script src="bkcore/hexgl/HUD.js"></script>
     <script src="bkcore/hexgl/RaceData.js"></script>

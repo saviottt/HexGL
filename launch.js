@@ -46,7 +46,7 @@
 
   defaultControls = bkcore.Utils.isTouchDevice() ? 1 : 0;
 
-  s = [['controlType', ['KEYBOARD', 'TOUCH', 'LEAP MOTION CONTROLLER', 'GAMEPAD'], defaultControls, defaultControls, 'Controls: '], ['quality', ['LOW', 'MID', 'HIGH', 'VERY HIGH'], 3, 3, 'Quality: '], ['hud', ['OFF', 'ON'], 1, 1, 'HUD: '], ['godmode', ['OFF', 'ON'], 0, 1, 'Godmode: ']];
+  s = [['controlType', ['KEYBOARD', 'TOUCH', 'LEAP MOTION CONTROLLER', 'GAMEPAD', 'WEBCAM GESTURE'], defaultControls, defaultControls, 'Controls: '], ['quality', ['LOW', 'MID', 'HIGH', 'VERY HIGH'], 3, 3, 'Quality: '], ['hud', ['OFF', 'ON'], 1, 1, 'HUD: '], ['godmode', ['OFF', 'ON'], 0, 1, 'Godmode: ']];
 
   _fn = function(a) {
     var e, f, _ref;
@@ -62,6 +62,35 @@
   for (_i = 0, _len = s.length; _i < _len; _i++) {
     a = s[_i];
     _fn(a);
+  }
+
+  // Synchronize HexGL main menu ↔ floating WebcamGestureController HUD
+  // so clicking "Controls: WEBCAM GESTURE" in the menu or clicking the
+  // HUD mode buttons always keeps both selectors in agreement.
+  if (bkcore.controllers && bkcore.controllers.WebcamGestureController) {
+    var webcamCtrl = bkcore.controllers.WebcamGestureController.getInstance({
+      onModeChange: function(mode) {
+        // Update the menu display when the HUD mode changes
+        s[0][3] = (mode === 'webcam') ? 4 : 0;
+        var el = $('s-' + s[0][0]);
+        if (el) el.innerHTML = s[0][4] + s[0][1][s[0][3]];
+      }
+    });
+
+    // Override the controlType menu button click to sync with the HUD
+    var origCtrlOnclick = $('s-controlType').onclick;
+    $('s-controlType').onclick = function() {
+      if (origCtrlOnclick) origCtrlOnclick();
+      // After the index cycles, check if we landed on WEBCAM GESTURE (index 4)
+      setTimeout(function() {
+        if (s[0][3] === 4) {
+          webcamCtrl.showInstructionsModal();
+          webcamCtrl.setMode('webcam', true);
+        } else {
+          webcamCtrl.setMode('keyboard', true);
+        }
+      }, 0);
+    };
   }
 
   $('step-2').onclick = function() {
@@ -88,29 +117,47 @@
     var canvas, gl;
     gl = null;
     canvas = document.createElement('canvas');
+    var opts = { failIfMajorPerformanceCaveat: false };
     try {
-      gl = canvas.getContext("webgl");
+      gl = canvas.getContext("webgl", opts) || canvas.getContext("webgl");
     } catch (_error) {}
     if (gl == null) {
       try {
-        gl = canvas.getContext("experimental-webgl");
+        gl = canvas.getContext("experimental-webgl", opts) || canvas.getContext("experimental-webgl");
+      } catch (_error) {}
+    }
+    if (gl == null) {
+      try {
+        gl = canvas.getContext("webgl2", opts) || canvas.getContext("webgl2");
       } catch (_error) {}
     }
     return gl != null;
   };
 
+  var startBtn = $('start');
+  var proceedToStep2 = function() {
+    $('step-1').style.display = 'none';
+    $('step-2').style.display = 'block';
+    return $('step-2').style.backgroundImage = "url(css/help-" + s[0][3] + ".png)";
+  };
+
   if (!hasWebGL()) {
-    getWebGL = $('start');
-    getWebGL.innerHTML = 'WebGL is not supported!';
-    getWebGL.onclick = function() {
-      return window.location.href = 'http://get.webgl.org/';
-    };
+    if (window.location.protocol === 'file:') {
+      startBtn.innerHTML = 'START (HTTP Recommended)';
+      startBtn.title = 'WebGL is restricted on file:/// URLs. Run via http://localhost:8080/';
+    } else {
+      startBtn.innerHTML = 'LAUNCH (WebGL Warning)';
+    }
+    startBtn.onclick = proceedToStep2;
   } else {
-    $('start').onclick = function() {
-      $('step-1').style.display = 'none';
-      $('step-2').style.display = 'block';
-      return $('step-2').style.backgroundImage = "url(css/help-" + s[0][3] + ".png)";
-    };
+    startBtn.onclick = proceedToStep2;
+  }
+
+  if (window.location.protocol === 'file:') {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:rgba(230,80,0,0.92);color:#fff;font-family:sans-serif;font-size:13px;text-align:center;padding:7px 10px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.5);';
+    banner.innerHTML = '⚠️ Note: Webcam & WebGL work best via HTTP. Server is running at: <a href="http://localhost:8080/" style="color:#00f0ff;margin:0 6px;">http://localhost:8080/</a> or <a href="http://localhost:8081/" style="color:#00f0ff;margin:0 6px;">http://localhost:8081/</a>';
+    document.body.appendChild(banner);
   }
 
 }).call(this);

@@ -73,8 +73,14 @@ bkcore.Audio.addSound = function(src, id, loop, callback, usePanner){
 
 bkcore.Audio.play = function(id){
 	var ctx = bkcore.Audio._ctx;
+	if(!bkcore.Audio.sounds || !bkcore.Audio.sounds[id]) return;
 
 	if(ctx){
+		if(ctx.state === 'suspended' && typeof ctx.resume === 'function'){
+			ctx.resume().catch(function(){});
+		}
+		if(!bkcore.Audio.sounds[id].src || !bkcore.Audio.sounds[id].gainNode) return;
+
 		var sound = ctx.createBufferSource();
 		sound.connect(bkcore.Audio.sounds[id].gainNode);
 		
@@ -92,30 +98,38 @@ bkcore.Audio.play = function(id){
 			bkcore.Audio.sounds[id].currentTime = 0;
 		}
 
-		bkcore.Audio.sounds[id].play();
+		try { bkcore.Audio.sounds[id].play(); } catch(e){}
 	}
 };
 
 bkcore.Audio.stop = function(id){
 	var ctx = bkcore.Audio._ctx;
+	if(!bkcore.Audio.sounds || !bkcore.Audio.sounds[id]) return;
 
 	if(ctx){
-		if(bkcore.Audio.sounds[id].bufferNode !== null){
+		if(bkcore.Audio.sounds[id].bufferNode != null){
 			var bufferNode = bkcore.Audio.sounds[id].bufferNode;
-			bufferNode.stop ? bufferNode.stop(ctx.currentTime) : bufferNode.noteOff(ctx.currentTime);
+			try {
+				bufferNode.stop ? bufferNode.stop(ctx.currentTime) : bufferNode.noteOff(ctx.currentTime);
+			} catch(e){}
+			bkcore.Audio.sounds[id].bufferNode = null;
 		}
 	}
 	else {
-		bkcore.Audio.sounds[id].pause();
-		bkcore.Audio.sounds[id].currentTime = 0;
+		try {
+			bkcore.Audio.sounds[id].pause();
+			bkcore.Audio.sounds[id].currentTime = 0;
+		} catch(e){}
 	}
 };
 
 bkcore.Audio.volume = function(id, volume){
 	var ctx = bkcore.Audio._ctx;
+	if(!bkcore.Audio.sounds || !bkcore.Audio.sounds[id]) return;
 
 	if(ctx){
-		bkcore.Audio.sounds[id].gainNode.gain.value = volume;
+		if(bkcore.Audio.sounds[id].gainNode && bkcore.Audio.sounds[id].gainNode.gain)
+			bkcore.Audio.sounds[id].gainNode.gain.value = volume;
 	}
 	else {
 		bkcore.Audio.sounds[id].volume = volume;

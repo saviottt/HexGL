@@ -1,0 +1,533 @@
+/* css/webcam-controls.css - HexGL Futuristic Neon Blue Webcam Gesture UI */
+
+:root {
+  --hex-bg-dark: rgba(6, 12, 24, 0.88);
+  --hex-bg-panel: rgba(10, 20, 38, 0.92);
+  --hex-neon-blue: #00f0ff;
+  --hex-neon-blue-dim: rgba(0, 240, 255, 0.25);
+  --hex-neon-green: #00ff9d;
+  --hex-neon-amber: #ffb800;
+  --hex-neon-red: #ff3366;
+  --hex-text-light: #e2f7ff;
+  --hex-text-muted: #6c99b8;
+}
+
+/* Floating Corner Control Panel */
+#hexgl-webcam-hud {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 280px;
+  background: var(--hex-bg-dark);
+  border: 1px solid var(--hex-neon-blue);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.22), inset 0 0 12px rgba(0, 240, 255, 0.08);
+  border-radius: 4px;
+  font-family: 'BebasNeueRegular', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--hex-text-light);
+  z-index: 9990;
+  user-select: none;
+  backdrop-filter: blur(6px);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  letter-spacing: 0.8px;
+}
+
+#hexgl-webcam-hud.minimized .hex-hud-body {
+  display: none;
+}
+
+.hex-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.18), rgba(0, 240, 255, 0.03));
+  border-bottom: 1px solid var(--hex-neon-blue-dim);
+}
+
+.hex-hud-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--hex-neon-blue);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hex-hud-title-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hex-text-muted);
+  box-shadow: 0 0 6px currentColor;
+}
+
+.hex-hud-title-dot.active {
+  background: var(--hex-neon-green);
+  box-shadow: 0 0 8px var(--hex-neon-green);
+}
+
+.hex-hud-header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.hex-icon-btn {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--hex-neon-blue-dim);
+  color: var(--hex-neon-blue);
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  transition: all 0.15s ease;
+}
+
+.hex-icon-btn:hover {
+  background: var(--hex-neon-blue);
+  color: #04101e;
+  box-shadow: 0 0 8px var(--hex-neon-blue);
+}
+
+.hex-hud-body {
+  padding: 10px 12px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+/* Mode Selector Switch */
+.hex-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.hex-mode-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hex-neon-blue-dim);
+  color: var(--hex-text-muted);
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.hex-mode-btn.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--hex-neon-blue);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
+}
+
+.hex-mode-btn:hover:not(.active) {
+  border-color: var(--hex-neon-blue);
+  color: var(--hex-text-light);
+}
+
+/* Camera Preview Box */
+.hex-cam-viewport {
+  position: relative;
+  width: 100%;
+  height: 148px;
+  background: #020710;
+  border: 1px solid var(--hex-neon-blue-dim);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+#hex-webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirrored preview */
+  opacity: 0.85;
+}
+
+#hex-webcam-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1); /* Matches mirrored video */
+  pointer-events: none;
+}
+
+.hex-cam-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  color: var(--hex-text-muted);
+  background: radial-gradient(circle at center, rgba(0, 240, 255, 0.08), rgba(2, 7, 16, 0.95));
+}
+
+.hex-cam-placeholder.hidden {
+  display: none;
+}
+
+/* Camera Enable / Disable Buttons */
+.hex-cam-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.hex-btn-autothrust {
+  width: 100%;
+  margin-top: 2px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid var(--hex-neon-blue);
+  color: var(--hex-neon-blue);
+  letter-spacing: 0.5px;
+}
+
+.hex-btn-autothrust:hover {
+  background: rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.hex-action-btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hex-btn-enable {
+  background: rgba(0, 240, 255, 0.16);
+  border: 1px solid var(--hex-neon-blue);
+  color: var(--hex-neon-blue);
+}
+
+.hex-btn-enable:hover:not(:disabled) {
+  background: var(--hex-neon-blue);
+  color: #030b17;
+  box-shadow: 0 0 12px var(--hex-neon-blue);
+}
+
+.hex-btn-disable {
+  background: rgba(255, 51, 102, 0.14);
+  border: 1px solid var(--hex-neon-red);
+  color: var(--hex-neon-red);
+}
+
+.hex-btn-disable:hover:not(:disabled) {
+  background: var(--hex-neon-red);
+  color: #ffffff;
+  box-shadow: 0 0 12px var(--hex-neon-red);
+}
+
+.hex-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Telemetry & Status Rows */
+.hex-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.hex-status-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  padding: 5px 7px;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hex-status-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--hex-text-muted);
+}
+
+.hex-status-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--hex-text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hex-status-value.ok {
+  color: var(--hex-neon-green);
+}
+
+.hex-status-value.warn {
+  color: var(--hex-neon-amber);
+}
+
+.hex-status-value.err {
+  color: var(--hex-neon-red);
+}
+
+/* Hand Indicators */
+.hex-hands-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.hex-hand-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--hex-text-muted);
+}
+
+.hex-hand-pill.detected {
+  border-color: var(--hex-neon-blue);
+  color: var(--hex-neon-blue);
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.hex-hand-pill.thumb-folded {
+  border-color: var(--hex-neon-amber);
+  color: var(--hex-neon-amber);
+  background: rgba(255, 184, 0, 0.15);
+}
+
+/* Active Gesture & Steering Bar */
+.hex-telemetry-banner {
+  background: rgba(0, 240, 255, 0.07);
+  border: 1px solid var(--hex-neon-blue-dim);
+  padding: 6px 8px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hex-gesture-badge {
+  font-weight: 700;
+  color: var(--hex-neon-blue);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+}
+
+.hex-steer-meter-wrap {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 6px 8px;
+  border-radius: 2px;
+}
+
+.hex-steer-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--hex-text-muted);
+}
+
+.hex-steer-labels span.active-dir {
+  color: var(--hex-neon-blue);
+  text-shadow: 0 0 6px var(--hex-neon-blue);
+}
+
+.hex-steer-track {
+  position: relative;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hex-steer-center-mark {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateX(-50%);
+}
+
+#hex-steer-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0%;
+  background: var(--hex-neon-blue);
+  box-shadow: 0 0 8px var(--hex-neon-blue);
+  transition: width 0.08s linear, left 0.08s linear;
+}
+
+/* Gesture Instructions Modal Overlay */
+#hexgl-gesture-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 18, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#hexgl-gesture-modal.hidden {
+  display: none;
+}
+
+.hex-modal-card {
+  width: 100%;
+  max-width: 720px;
+  background: var(--hex-bg-panel);
+  border: 1px solid var(--hex-neon-blue);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.3), inset 0 0 20px rgba(0, 240, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  color: var(--hex-text-light);
+}
+
+.hex-modal-header {
+  padding: 16px 24px;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.22), transparent);
+  border-bottom: 1px solid var(--hex-neon-blue-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hex-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--hex-neon-blue);
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+.hex-modal-content {
+  padding: 20px 24px;
+}
+
+.hex-modal-subtitle {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: var(--hex-text-muted);
+}
+
+.hex-gesture-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hex-gesture-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-radius: 4px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.hex-gesture-card:hover {
+  border-color: var(--hex-neon-blue);
+  transform: translateY(-2px);
+}
+
+.hex-gesture-svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+}
+
+.hex-gesture-card h3 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--hex-neon-blue);
+  letter-spacing: 0.6px;
+}
+
+.hex-gesture-card p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--hex-text-light);
+  line-height: 1.4;
+}
+
+.hex-modal-footer {
+  padding: 14px 24px;
+  background: rgba(0, 0, 0, 0.35);
+  border-top: 1px solid var(--hex-neon-blue-dim);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.hex-modal-btn {
+  padding: 9px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hex-modal-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--hex-text-muted);
+  color: var(--hex-text-muted);
+}
+
+.hex-modal-btn-secondary:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.hex-modal-btn-primary {
+  background: var(--hex-neon-blue);
+  border: 1px solid var(--hex-neon-blue);
+  color: #020b18;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.45);
+}
+
+.hex-modal-btn-primary:hover {
+  background: #33f3ff;
+  box-shadow: 0 0 22px rgba(0, 240, 255, 0.8);
+}
